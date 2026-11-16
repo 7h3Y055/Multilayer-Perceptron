@@ -123,19 +123,3 @@ def train_val_split(
     val_idx = indices[train_size:]
 
     return X[train_idx], X[val_idx], y[train_idx], y[val_idx]
-
-
-def save_split_csv(
-    filepath: str,
-    X: np.ndarray,
-    y: np.ndarray,
-    ids: Optional[np.ndarray] = None,
-) -> None:
-    """Save features and targets back to CSV format matching the 32-column structure."""
-    with open(filepath, mode="w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        for i in range(len(y)):
-            sample_id = ids[i] if ids is not None else 100000 + i
-            diag = "M" if (y[i][0] if y.ndim > 1 else y[i]) == 1 else "B"
-            row = [sample_id, diag] + [f"{val:.6g}" for val in X[i]]
-            writer.writerow(row)

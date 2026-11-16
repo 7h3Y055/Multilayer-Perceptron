@@ -9,8 +9,8 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train Multilayer Perceptron model.")
-    parser.add_argument("--dataset", type=str, default="data_train.csv", help="Path to training dataset.")
-    parser.add_argument("--val-dataset", type=str, default=None, help="Path to validation dataset.")
+    parser.add_argument("--dataset", type=str, default="dataset/data_train.csv", help="Path to training dataset.")
+    parser.add_argument("--val-dataset", type=str, default="dataset/data_valid.csv", help="Path to validation dataset.")
     parser.add_argument(
         "--layer",
         type=int,

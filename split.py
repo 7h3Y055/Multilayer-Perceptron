@@ -5,8 +5,9 @@ Subject IV.4: "A program to separate the dataset into two parts, one for trainin
 """
 
 import argparse
+import os
+import random
 import sys
-from src.dataset import load_dataset, train_val_split, save_split_csv
 
 
 def parse_args():
@@ -14,32 +15,46 @@ def parse_args():
     parser.add_argument("--dataset", type=str, default="data.csv", help="Path to raw dataset.")
     parser.add_argument("--train-ratio", type=float, default=0.8, help="Ratio for training set (default: 0.8).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
-    parser.add_argument("--train-out", type=str, default="data_train.csv", help="Path for output training CSV.")
-    parser.add_argument("--val-out", type=str, default="data_valid.csv", help="Path for output validation CSV.")
+    parser.add_argument("--train-out", type=str, default="dataset/data_train.csv", help="Path for output training CSV.")
+    parser.add_argument("--val-out", type=str, default="dataset/data_valid.csv", help="Path for output validation CSV.")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
-    print(f"Loading dataset from '{args.dataset}'...")
     try:
-        X, y = load_dataset(args.dataset)
+        with open(args.dataset, "r", encoding="utf-8") as f:
+            lines = [line for line in f if line.strip()]
     except Exception as e:
-        print(f"Error loading dataset: {e}", file=sys.stderr)
+        print(f"Error reading '{args.dataset}': {e}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Total samples loaded: {X.shape[0]}, Features: {X.shape[1]}")
+    # Shuffle lines with reproducible seed
+    if args.seed is not None:
+        random.seed(args.seed)
+    random.shuffle(lines)
 
-    X_train, X_val, y_train, y_val = train_val_split(
-        X, y, train_ratio=args.train_ratio, seed=args.seed
-    )
+    # Split lines
+    split_idx = int(len(lines) * args.train_ratio)
+    train_lines = lines[:split_idx]
+    val_lines = lines[split_idx:]
 
-    save_split_csv(args.train_out, X_train, y_train)
-    save_split_csv(args.val_out, X_val, y_val)
+    # Ensure output directories exist
+    for out_path in (args.train_out, args.val_out):
+        out_dir = os.path.dirname(out_path)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
 
-    print(f"Training set:   {X_train.shape[0]} samples -> '{args.train_out}'")
-    print(f"Validation set: {X_val.shape[0]} samples -> '{args.val_out}'")
+    with open(args.train_out, "w", encoding="utf-8") as f:
+        f.writelines(train_lines)
+
+    with open(args.val_out, "w", encoding="utf-8") as f:
+        f.writelines(val_lines)
+
+    print(f"Total samples:  {len(lines)}")
+    print(f"Training set:   {len(train_lines)} samples -> '{args.train_out}'")
+    print(f"Validation set: {len(val_lines)} samples -> '{args.val_out}'")
     print("Dataset split completed successfully.")
 
 

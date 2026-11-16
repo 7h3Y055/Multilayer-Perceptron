@@ -251,8 +251,9 @@ Prepare to explain and write on a whiteboard:
 ```text
 Multilayer-Perceptron/
 ├── data.csv                 # Raw Wisconsin Breast Cancer dataset
-├── data_train.csv           # Generated training set
-├── data_valid.csv           # Generated validation set
+├── dataset/
+│   ├── data_train.csv       # Generated training set
+│   └── data_valid.csv       # Generated validation set
 ├── saved_model.npy          # Saved weights, topology & scaler stats
 ├── split.py                 # Program 1: Dataset splitting
 ├── train.py                 # Program 2: Network training & plotting
@@ -276,11 +277,11 @@ Multilayer-Perceptron/
 ```bash
 python split.py --dataset data.csv --train-ratio 0.8 --seed 42
 ```
-- Splits `data.csv` into `data_train.csv` and `data_valid.csv`.
+- Splits `data.csv` into `dataset/data_train.csv` and `dataset/data_valid.csv`.
 
 ### 2. Training (`train.py`)
 ```bash
-python train.py --dataset data_train.csv --val-dataset data_valid.csv \
+python train.py --dataset dataset/data_train.csv --val-dataset dataset/data_valid.csv \
                 --layer 24 24 24 \
                 --epochs 84 \
                 --batch_size 8 \
@@ -291,7 +292,7 @@ python train.py --dataset data_train.csv --val-dataset data_valid.csv \
 
 ### 3. Prediction (`predict.py`)
 ```bash
-python predict.py --dataset data_valid.csv --model saved_model.npy
+python predict.py --dataset dataset/data_valid.csv --model saved_model.npy
 ```
 - Loads the trained model, performs inference, outputs predictions, and calculates final Binary Cross-Entropy loss.
 

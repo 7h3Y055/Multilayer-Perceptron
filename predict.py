@@ -9,7 +9,7 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run predictions and evaluate with Binary Cross-Entropy.")
-    parser.add_argument("--dataset", type=str, default="data_valid.csv", help="Path to evaluation dataset.")
+    parser.add_argument("--dataset", type=str, default="dataset/data_valid.csv", help="Path to evaluation dataset.")
     parser.add_argument("--model", type=str, default="./saved_model.npy", help="Path to saved model file.")
     parser.add_argument("--output", type=str, default=None, help="Optional path to save predictions.")
     return parser.parse_args()
