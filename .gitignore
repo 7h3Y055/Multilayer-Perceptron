@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+data_train.csv
+data_valid.csv
+eda_distributions.png
+eda_correlations.png
+eda_summary.png
