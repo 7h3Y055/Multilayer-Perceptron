@@ -13,12 +13,9 @@ import matplotlib.pyplot as plt
 from src.dataset import load_dataset
 
 FEATURE_NAMES = [
-    "radius_mean", "texture_mean", "perimeter_mean", "area_mean", "smoothness_mean",
-    "compactness_mean", "concavity_mean", "concave_points_mean", "symmetry_mean", "fractal_dimension_mean",
-    "radius_se", "texture_se", "perimeter_se", "area_se", "smoothness_se",
-    "compactness_se", "concavity_se", "concave_points_se", "symmetry_se", "fractal_dimension_se",
-    "radius_worst", "texture_worst", "perimeter_worst", "area_worst", "smoothness_worst",
-    "compactness_worst", "concavity_worst", "concave_points_worst", "symmetry_worst", "fractal_dimension_worst",
+    "radius_mean", "texture_mean", "perimeter_mean", "area_mean", "smoothness_mean", "compactness_mean", "concavity_mean", "concave_points_mean", "symmetry_mean", "fractal_dimension_mean",
+    "radius_se", "texture_se", "perimeter_se", "area_se", "smoothness_se", "compactness_se", "concavity_se", "concave_points_se", "symmetry_se", "fractal_dimension_se",
+    "radius_worst", "texture_worst", "perimeter_worst", "area_worst", "smoothness_worst", "compactness_worst", "concavity_worst", "concave_points_worst", "symmetry_worst", "fractal_dimension_worst",
 ]
 
 
@@ -32,11 +29,12 @@ def parse_args():
 
 
 def plot_distributions(X: np.ndarray, y: np.ndarray, save_path: str = None):
-    """Plot histograms of key features separated by class (M vs B)."""
+    """Plot histograms of all 10 core 'mean' features separated by class (M vs B)."""
     y_flat = y.reshape(-1)
-    indices = [0, 1, 2, 3, 4, 7]  # radius, texture, perimeter, area, smoothness, concave_points
+    # All 10 core 'mean' features (indices 0 through 9)
+    indices = list(range(10))
 
-    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
     axes = axes.flatten()
 
     for plot_idx, feat_idx in enumerate(indices):
@@ -47,12 +45,12 @@ def plot_distributions(X: np.ndarray, y: np.ndarray, save_path: str = None):
 
         ax.hist(feat_b, bins=25, alpha=0.65, label="Benign (B)", color="#2ca02c", density=True, edgecolor="black", linewidth=0.5)
         ax.hist(feat_m, bins=25, alpha=0.65, label="Malignant (M)", color="#d62728", density=True, edgecolor="black", linewidth=0.5)
-        ax.set_title(name, fontsize=12, fontweight="bold")
-        ax.set_ylabel("Density")
+        ax.set_title(name, fontsize=11, fontweight="bold")
+        ax.set_ylabel("Density", fontsize=9)
         ax.grid(True, linestyle=":", alpha=0.5)
-        ax.legend()
+        ax.legend(fontsize=8)
 
-    plt.suptitle("Breast Cancer Feature Distributions: Malignant (M) vs Benign (B)", fontsize=15, fontweight="bold")
+    plt.suptitle("Breast Cancer Feature Distributions: Malignant (M) vs Benign (B) — All 10 Core Features", fontsize=15, fontweight="bold")
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=300)
@@ -114,17 +112,16 @@ def main():
     print(f"Benign    (B / 0)  : {num_benign} ({num_benign / num_samples * 100:.2f}%)")
     print("-" * 65)
 
-    print("Feature Scale Discrepancies (Why Normalization is Vital):")
-    print(f"  {'Feature Name':<25} {'Min':>10} {'Max':>10} {'Mean':>10} {'Std':>10}")
-    print(f"  {'-'*25} {'-'*10} {'-'*10} {'-'*10} {'-'*10}")
-    indices_to_show = [0, 1, 2, 3, 4, 7]
-    for idx in indices_to_show:
+    print("Feature Scale Discrepancies:")
+    print(f"  {'Feature Name':<28} {'Min':>10} {'Max':>10} {'Mean':>10} {'Std':>10}")
+    print(f"  {'-'*28} {'-'*10} {'-'*10} {'-'*10} {'-'*10}")
+    for idx in range(10):
         name = FEATURE_NAMES[idx]
         f_min = np.min(X[:, idx])
         f_max = np.max(X[:, idx])
         f_mean = np.mean(X[:, idx])
         f_std = np.std(X[:, idx])
-        print(f"  {name:<25} {f_min:10.2f} {f_max:10.2f} {f_mean:10.2f} {f_std:10.2f}")
+        print(f"  {name:<28} {f_min:10.2f} {f_max:10.2f} {f_mean:10.2f} {f_std:10.2f}")
     print("=" * 65)
 
     plot_distributions(X, y, args.plot_dist)
