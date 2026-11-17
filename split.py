@@ -12,7 +12,8 @@ import sys
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Split dataset into training and validation sets.")
-    parser.add_argument("--dataset", type=str, default="data.csv", help="Path to raw dataset.")
+    parser.add_argument("pos_dataset", nargs="?", default=None, help="Path to raw dataset (positional).")
+    parser.add_argument("--dataset", type=str, default="data.csv", help="Path to raw dataset (flag, default: data.csv).")
     parser.add_argument("--train-ratio", type=float, default=0.8, help="Ratio for training set (default: 0.8).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
     parser.add_argument("--train-out", type=str, default="dataset/data_train.csv", help="Path for output training CSV.")
@@ -22,12 +23,13 @@ def parse_args():
 
 def main():
     args = parse_args()
+    dataset_file = args.pos_dataset if args.pos_dataset is not None else args.dataset
 
     try:
-        with open(args.dataset, "r", encoding="utf-8") as f:
+        with open(dataset_file, "r", encoding="utf-8") as f:
             lines = [line for line in f if line.strip()]
     except Exception as e:
-        print(f"Error reading '{args.dataset}': {e}", file=sys.stderr)
+        print(f"Error reading '{dataset_file}': {e}", file=sys.stderr)
         sys.exit(1)
 
     # Shuffle lines with reproducible seed
