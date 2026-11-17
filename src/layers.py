@@ -19,31 +19,43 @@ class Layer:
 # --- Activation Functions & Derivatives ---
 
 def sigmoid(z: np.ndarray) -> np.ndarray:
-    pass
+    """Sigmoid: squashes numbers between 0 and 1."""
+    z_clipped = np.clip(z, -500, 500)
+    return 1.0 / (1.0 + np.exp(-z_clipped))
 
 
 def sigmoid_derivative(a: np.ndarray) -> np.ndarray:
-    pass
+    """Derivative of sigmoid where 'a' is already sigmoid(z)."""
+    return a * (1.0 - a)
 
 
 def relu(z: np.ndarray) -> np.ndarray:
-    pass
+    """ReLU (Rectified Linear Unit): returns max(0, z)."""
+    return np.maximum(0.0, z)
 
 
 def relu_derivative(z: np.ndarray) -> np.ndarray:
-    pass
+    """Derivative of ReLU: 1 if z > 0, otherwise 0."""
+    return (z > 0.0).astype(np.float64)
 
 
 def tanh(z: np.ndarray) -> np.ndarray:
-    pass
+    """Hyperbolic tangent: squashes numbers between -1 and +1."""
+    return np.tanh(z)
 
 
 def tanh_derivative(a: np.ndarray) -> np.ndarray:
-    pass
+    """Derivative of tanh where 'a' is already tanh(z)."""
+    return 1.0 - np.square(a)
 
 
 def softmax(z: np.ndarray) -> np.ndarray:
-    pass
+    """Softmax: converts raw scores into probabilities that sum to 1.
+    Subtracting np.max(z) prevents numerical overflow (e^(huge number) = inf).
+    """
+    shift_z = z - np.max(z, axis=-1, keepdims=True)
+    exp_z = np.exp(shift_z)
+    return exp_z / np.sum(exp_z, axis=-1, keepdims=True)
 
 
 # --- Dense Layer ---
