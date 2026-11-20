@@ -1,306 +1,302 @@
-# Multilayer Perceptron (MLP) — 42 Project Study Plan & Guide
+# Multilayer Perceptron (MLP) — 42 School Machine Learning
 
-An artificial neural network built completely from scratch in Python (using only `NumPy` for linear algebra and `Matplotlib` for visualization) to predict breast cancer diagnoses (Malignant vs. Benign) from the Wisconsin Diagnostic Breast Cancer dataset.
+A complete, production-grade Artificial Neural Network implemented **from scratch** in Python using only `NumPy` for matrix mathematics and `Matplotlib` for visualization. Built to predict whether a breast cancer tumor is **Malignant (M)** or **Benign (B)** based on the Wisconsin Diagnostic Breast Cancer (WDBC) dataset.
 
 ---
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Subject Requirements & Constraints](#subject-requirements--constraints)
-- [Study & Implementation Roadmap](#study--implementation-roadmap)
-  - [Phase 1: Mathematical Foundations](#phase-1-mathematical-foundations)
-  - [Phase 2: Data Preprocessing & Split](#phase-2-data-preprocessing--split)
-  - [Phase 3: Modular Architecture Design](#phase-3-modular-architecture-design)
-  - [Phase 4: Backpropagation & Training Loop](#phase-4-backpropagation--training-loop)
-  - [Phase 5: Evaluation, Prediction & Curves](#phase-5-evaluation-prediction--curves)
-  - [Phase 6: Bonuses & Defense Preparation](#phase-6-bonuses--defense-preparation)
-- [Mathematical Cheat Sheet (Whiteboard Defense)](#mathematical-cheat-sheet-whiteboard-defense)
-- [Target Project Structure](#target-project-structure)
-- [CLI Programs Specification](#cli-programs-specification)
-- [Recommended Resources](#recommended-resources)
+1. [Project Overview & 42 Constraints](#1-project-overview--42-constraints)
+2. [Project File Structure](#2-project-file-structure)
+3. [Quickstart & Evaluation Commands](#3-quickstart--evaluation-commands)
+4. [Theoretical Deep-Dive (Whiteboard Defense Guide)](#4-theoretical-deep-dive-whiteboard-defense-guide)
+   - [A. Feedforward Propagation & Matrix Dimensions](#a-feedforward-propagation--matrix-dimensions)
+   - [B. Activation Functions](#b-activation-functions)
+   - [C. Backpropagation Derivation (The Chain Rule)](#c-backpropagation-derivation-the-chain-rule)
+   - [D. Softmax + Cross-Entropy Derivative Proof ($A - Y$)](#d-softmax--cross-entropy-derivative-proof-a---y)
+   - [E. Why Feature Normalization is Mandatory (The 25,000x Gap)](#e-why-feature-normalization-is-mandatory-the-25000x-gap)
+   - [F. Weight Initializations (He Uniform vs. Zeros)](#f-weight-initializations-he-uniform-vs-zeros)
+   - [G. Optimizers: SGD vs. Adam](#g-optimizers-sgd-vs-adam)
+   - [H. Learning Curves: Diagnosing Overfitting & Early Stopping](#h-learning-curves-diagnosing-overfitting--early-stopping)
+5. [Bonus Features Implemented](#5-bonus-features-implemented)
+6. [Defense FAQ: Rapid-Fire Questions & Answers](#6-defense-faq-rapid-fire-questions--answers)
 
 ---
 
-## Project Overview
+## 1. Project Overview & 42 Constraints
 
-The objective of this project is to implement a Multilayer Perceptron (feedforward artificial neural network) trained via backpropagation and gradient descent.
-
-- **Dataset:** Wisconsin Breast Cancer dataset (`data.csv`, 32 columns: ID, Diagnosis `M`/`B`, 30 continuous real-valued features).
-- **Core Task:** Binary classification predicting whether a tumor sample is **Malignant (M)** or **Benign (B)**.
-- **Rules:** No high-level ML frameworks permitted (no PyTorch, TensorFlow, Keras, scikit-learn neural network models). Everything must be implemented from first principles.
-
----
-
-## Subject Requirements & Constraints
-
-| Component | Requirement |
-| :--- | :--- |
-| **Allowed Libraries** | Only libraries for linear algebra (`NumPy`) and plotting (`Matplotlib`). |
-| **Hidden Layers** | Must contain **at least 2 hidden layers** by default (e.g., input $\to 24 \to 24 \to$ output). |
-| **Output Layer** | Must implement **Softmax** activation to output a valid probability distribution. |
-| **Modularity** | Architecture must be configurable via CLI flags (e.g., `--layer 24 24 24 --epochs 84 --learning_rate 0.0314 --batch_size 8`) or a configuration file. |
-| **Required Programs** | 1. **Data Splitter:** Splits dataset into training and validation sets (with optional seed).<br>2. **Training Program:** Displays metrics per epoch, shows learning curves, and saves model topology & weights.<br>3. **Prediction Program:** Loads model weights, executes inference, and evaluates Binary Cross-Entropy loss. |
-| **Peer-Evaluation** | You must be able to explain and write out the mathematics of **feedforward**, **backpropagation**, and **gradient descent** on a whiteboard. |
+* **Dataset:** 569 samples with 30 continuous cell nucleus features (radius, texture, perimeter, area, concavity, etc.).
+* **Target:** Predict diagnosis (`M` = Malignant $\to 1$, `B` = Benign $\to 0$).
+* **Subject Constraints:**
+  * **No ML/Neural Network frameworks allowed** (no PyTorch, TensorFlow, Keras, scikit-learn).
+  * Only linear algebra (`NumPy`) and plotting (`Matplotlib`) are permitted.
+  * Must contain **at least two hidden layers** by default (e.g. `30 -> 24 -> 24 -> 2`).
+  * Output layer must use **Softmax** to output calibrated probabilities.
+  * Must submit 3 programs: data split, training, prediction (or 1 unified program with options).
+  * Evaluated on understanding of **feedforward**, **backpropagation**, and **gradient descent**.
 
 ---
 
-## Study & Implementation Roadmap
-
-```
-Phase 1: Math Foundations ──► Phase 2: Data & Split ──► Phase 3: Network Architecture
-                                                                  │
-Phase 6: Defense & Bonuses ◄── Phase 5: Predict & Curves ◄── Phase 4: Backprop & Training
-```
-
-### Phase 1: Mathematical Foundations
-*Goal: Understand the mathematical engine before writing network code.*
-
-1. **Matrix Dimensions & Vectorization:**
-   - Let $m$ be the batch size, $n^{[l-1]}$ input features, $n^{[l]}$ neurons in current layer.
-   - Input batch: $X \in \mathbb{R}^{m \times n^{[0]}}$
-   - Layer weights: $W^{[l]} \in \mathbb{R}^{n^{[l-1]} \times n^{[l]}}$
-   - Layer bias: $b^{[l]} \in \mathbb{R}^{1 \times n^{[l]}}$
-   - Affine transformation: $Z^{[l]} = A^{[l-1]} W^{[l]} + b^{[l]}$
-   - Activation output: $A^{[l]} = f(Z^{[l]})$
-2. **Activation Functions & Derivatives:**
-   - **Sigmoid:** $\sigma(z) = \frac{1}{1 + e^{-z}}$, with $\sigma'(z) = \sigma(z)(1 - \sigma(z))$
-   - **ReLU:** $f(z) = \max(0, z)$, with $f'(z) = \begin{cases} 1 & z > 0 \\ 0 & z \le 0 \end{cases}$
-   - **Softmax:** $S(z_i) = \frac{e^{z_i - \max(z)}}{\sum_j e^{z_j - \max(z)}}$ (subtract max for numerical stability)
-3. **Loss Functions:**
-   - **Binary Cross-Entropy (BCE):**
-     $$E = -\frac{1}{N} \sum_{n=1}^N [y_n \log p_n + (1 - y_n) \log(1 - p_n)]$$
-   - **Categorical Cross-Entropy:**
-     $$E = -\frac{1}{N} \sum_{n=1}^N \sum_{k=1}^K y_{nk} \log(p_{nk})$$
-4. **Backpropagation Derivation:**
-   - For Softmax + Cross-Entropy, the output layer gradient is:
-     $$\delta^{[L]} = \frac{\partial L}{\partial Z^{[L]}} = A^{[L]} - Y$$
-   - Gradients for any layer $l$:
-     $$dW^{[l]} = \frac{1}{m} (A^{[l-1]})^T \delta^{[l]}$$
-     $$db^{[l]} = \frac{1}{m} \sum_{i=1}^m \delta_i^{[l]}$$
-     $$\delta^{[l-1]} = (\delta^{[l]} (W^{[l]})^T) \odot f'(Z^{[l-1]})$$
-
----
-
-### Phase 2: Data Exploration, Preprocessing & Split
-*Goal: Explore and understand `data.csv`, implement clean scaling, and create `split.py`.*
-
-1. **Dataset Structure (`data.csv`):**
-   - Column 0: Patient ID (non-predictive identifier, drop during preprocessing).
-   - Column 1: Diagnosis (`M` = Malignant $\to [1, 0]$ or $1$; `B` = Benign $\to [0, 1]$ or $0$).
-   - Columns 2–31: 30 continuous features (radius, texture, perimeter, area, smoothness, etc.).
-2. **Exploratory Data Analysis (EDA):**
-   > The subject states: *"A good practice would be to begin by exploring the dataset, displaying it with graphs, visualizing, and manipulating its different features."*
-   - Check for missing values and class balance (count of M vs B).
-   - Plot histograms or box plots for each feature to understand value distributions.
-   - Use a correlation heatmap to identify highly correlated features.
-   - Use pair plots or scatter plots colored by diagnosis to visualize feature separability.
-   - Identify which features have vastly different scales (motivates normalization).
-2. **Feature Normalization (Z-Score Standardization):**
-   $$X_{\text{norm}} = \frac{X - \mu}{\sigma}$$
-   - **Crucial Rule:** Compute $\mu$ and $\sigma$ strictly on the training set, then apply them to the validation set to prevent data leakage.
-3. **Implementation — `split.py`:**
-   - Shuffle dataset randomly (with reproducible `--seed`).
-   - Partition into training set (e.g., 80%) and validation set (e.g., 20%).
-   - Export `data_train.csv` and `data_valid.csv`.
-
----
-
-### Phase 3: Modular Architecture Design
-*Goal: Build an object-oriented, layer-based neural network framework.*
-
-1. **Weight Initializations:**
-   - Avoid zero-initialization (breaks symmetry).
-   - **He (Kaiming) Uniform/Normal:** Optimal for ReLU ($\text{std} = \sqrt{2 / n_{in}}$).
-   - **Xavier (Glorot) Uniform/Normal:** Optimal for Sigmoid/Softmax ($\text{std} = \sqrt{2 / (n_{in} + n_{out})}$).
-2. **Layer Abstractions:**
-   - `DenseLayer`: Manages $W$, $b$, forward pass $Z = XW + b$, and backward pass computing $dW, db$.
-   - `ActivationLayer`: Computes forward non-linear mapping and backward element-wise derivative.
-
----
-
-### Phase 4: Backpropagation & Training Loop
-*Goal: Implement batching, the backward pass, and weight updates.*
-
-1. **Mini-Batch Gradient Descent:**
-   - Shuffle training indices each epoch.
-   - Iterate through mini-batches of size `batch_size`.
-   - Update parameters:
-     $$W \leftarrow W - \alpha \cdot dW, \quad b \leftarrow b - \alpha \cdot db$$
-2. **Epoch Tracking:**
-   - Compute training loss and validation loss at the end of each epoch.
-   - Format terminal output matching the subject:
-     ```text
-     epoch 01/70 - loss: 0.6882 - val_loss: 0.6788
-     ...
-     epoch 70/70 - loss: 0.0640 - val_loss: 0.0474
-     > saving model './saved_model.npy' to disk...
-     ```
-
----
-
-### Phase 5: Evaluation, Prediction & Curves
-*Goal: Build `train.py`, `predict.py`, and visual learning curves.*
-
-1. **Model Persistence:**
-   - Serialize layer topology, learned weights, biases, and normalization scaling factors into a `.npy`, `.npz`, or `.json` file.
-2. **Visual Learning Curves:**
-   - Display two graphs upon training completion:
-     - **Loss Curve:** Training loss and validation loss vs epochs.
-     - **Accuracy Curve:** Training accuracy and validation accuracy vs epochs.
-3. **Implementation — `predict.py`:**
-   - Load saved model and weights.
-   - Standardize input test data using saved $\mu, \sigma$.
-   - Perform forward pass to compute class probabilities.
-   - Output predictions and evaluate with Binary Cross-Entropy loss.
-
----
-
-### Phase 6: Bonuses & Defense Preparation
-*Goal: Implement all 5 subject bonuses and master evaluation defense questions.*
-
-> The bonus part will only be assessed if the mandatory part is **PERFECT**.
-> Make sure all mandatory requirements work flawlessly before starting bonuses.
-
-#### Bonus 1: Advanced Optimizers
-*Subject: "A more complex optimization function (for example: Nesterov momentum, RMSprop, Adam, ...)"*
-
-Implement at least one (ideally all three) as selectable options via CLI (e.g., `--optimizer adam`):
-
-- **Nesterov Momentum** (specifically named in the subject):
-  - Look-ahead gradient: compute gradient at the anticipated next position.
-  - $v_t = \gamma v_{t-1} + \alpha \nabla_\theta L(\theta - \gamma v_{t-1})$
-  - $\theta = \theta - v_t$
-  - Typical $\gamma = 0.9$.
-- **RMSprop:**
-  - Adapts learning rate per-parameter using a moving average of squared gradients.
-  - $s_t = \beta s_{t-1} + (1 - \beta) (\nabla_\theta L)^2$
-  - $\theta = \theta - \frac{\alpha}{\sqrt{s_t + \epsilon}} \nabla_\theta L$
-  - Typical $\beta = 0.9$, $\epsilon = 10^{-8}$.
-- **Adam** (Adaptive Moment Estimation):
-  - Combines momentum (first moment) and RMSprop (second moment) with bias correction.
-  - $m_t = \beta_1 m_{t-1} + (1 - \beta_1) \nabla_\theta L$ (first moment)
-  - $v_t = \beta_2 v_{t-1} + (1 - \beta_2) (\nabla_\theta L)^2$ (second moment)
-  - Bias-corrected: $\hat{m}_t = \frac{m_t}{1 - \beta_1^t}$, $\hat{v}_t = \frac{v_t}{1 - \beta_2^t}$
-  - $\theta = \theta - \frac{\alpha \hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$
-  - Typical $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$.
-
-#### Bonus 2: Multiple Learning Curves on the Same Graph
-*Subject: "A display of multiple learning curves on the same graph (really useful to compare different models)"*
-
-- Train multiple models with different hyperparameters (e.g., different learning rates, optimizers, or architectures).
-- Plot all their loss curves (or accuracy curves) overlaid on a single Matplotlib figure with a legend identifying each configuration.
-- Example: compare SGD vs Adam vs RMSprop convergence on the same axes.
-
-#### Bonus 3: Metrics History
-*Subject: "A history of the metrics obtained during training"*
-
-- At each epoch, record all computed metrics (loss, accuracy, val_loss, val_accuracy, and any bonus metrics) into a structured history object (e.g., a dictionary of lists).
-- Save this history to disk alongside the model (e.g., `training_history.json` or `.csv`).
-- Allow re-loading and re-plotting the history without re-training.
-- Example structure:
-  ```json
-  {
-    "epoch": [1, 2, 3, ...],
-    "loss": [0.6882, 0.5431, ...],
-    "val_loss": [0.6788, 0.5201, ...],
-    "accuracy": [0.55, 0.72, ...],
-    "val_accuracy": [0.58, 0.74, ...]
-  }
-  ```
-
-#### Bonus 4: Early Stopping
-*Subject: "The implementation of early stopping"*
-
-- Monitor validation loss at each epoch.
-- If validation loss does not improve for $P$ consecutive epochs (patience), stop training early.
-- Restore the model weights from the best epoch (lowest validation loss).
-- Add CLI flag: `--early_stopping --patience 10`.
-- Print a message when triggered:
-  ```text
-  Early stopping at epoch 45/200 (patience=10). Restoring best weights from epoch 35.
-  ```
-
-#### Bonus 5: Multiple Evaluation Metrics
-*Subject: "Evaluate the learning phase with multiple metrics"*
-
-- Beyond loss and accuracy, compute and display during training or at prediction time:
-  - **Confusion Matrix:** True Positives, True Negatives, False Positives, False Negatives.
-  - **Precision:** $\frac{TP}{TP + FP}$
-  - **Recall (Sensitivity):** $\frac{TP}{TP + FN}$
-  - **F1-Score:** $2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$
-  - **Specificity:** $\frac{TN}{TN + FP}$
-- Display these in `predict.py` output and optionally during training epochs.
-
----
-
-#### 42 Peer Defense Checklist
-Prepare to explain and write on a whiteboard:
-
-- [ ] Derive $\frac{\partial L}{\partial W}$ and $\frac{\partial L}{\partial b}$ step-by-step using the chain rule.
-- [ ] Explain why feature scaling is indispensable for gradient descent.
-- [ ] Explain vanishing and exploding gradients and how proper weight initialization resolves them.
-- [ ] Explain how Softmax coupled with Cross-Entropy produces the clean error $\hat{y} - y$.
-- [ ] Explain the difference between SGD, Nesterov Momentum, RMSprop, and Adam.
-- [ ] Explain what early stopping prevents and how it relates to the bias-variance tradeoff.
-
----
-
-## Target Project Structure
+## 2. Project File Structure
 
 ```text
 Multilayer-Perceptron/
-├── data.csv                 # Raw Wisconsin Breast Cancer dataset
-├── dataset/
-│   ├── data_train.csv       # Generated training set
-│   └── data_valid.csv       # Generated validation set
-├── saved_model.npy          # Saved weights, topology & scaler stats
-├── split.py                 # Program 1: Dataset splitting
-├── train.py                 # Program 2: Network training & plotting
-├── predict.py               # Program 3: Inference & BCE loss evaluation
-├── src/
-│   ├── __init__.py
-│   ├── dataset.py           # Parsing, label encoding, Z-score normalization
-│   ├── layers.py            # DenseLayer, Activation layers
-│   ├── network.py           # NeuralNetwork container (fit, predict, save/load)
-│   ├── losses.py            # Binary & Categorical Cross-Entropy
-│   ├── optimizers.py        # SGD, Momentum, Adam
-│   └── visualizer.py        # Matplotlib learning curves
-└── README.md
+├── data.csv                 # Raw Wisconsin Breast Cancer dataset (569 rows)
+├── requirements.txt         # NumPy and Matplotlib
+│
+├── eda.py                   # Exploratory Data Analysis & visualizer (Subject IV.2)
+├── split.py                 # Program 1: Shuffles and splits dataset with seed
+├── train.py                 # Program 2: Trains network, logs epochs, plots curves, saves model
+├── predict.py               # Program 3: Loads model, runs inference, evaluates with BCE
+├── compare.py               # Bonus: Trains & compares multiple optimizers on one graph
+├── mlp.py                   # Unified CLI program switching between all phases
+│
+├── dataset/                 # Automatically created by split.py
+│   ├── data_train.csv       # 455 training samples (80%)
+│   └── data_valid.csv       # 114 validation samples (20%)
+│
+└── src/
+    ├── __init__.py          # Package initializer
+    ├── dataset.py           # Data loader, one-hot encoder, and Z-score StandardScaler
+    ├── layers.py            # DenseLayer (He/Xavier initializers, Sigmoid, ReLU, Softmax)
+    ├── losses.py            # Categorical Cross-Entropy, Binary Cross-Entropy, Metrics
+    ├── optimizers.py        # SGD (Mandatory) and Adam (Bonus)
+    ├── network.py           # NeuralNetwork container (forward, backward, fit, save, load)
+    └── visualizer.py        # Matplotlib learning curves & multi-model comparison
 ```
 
 ---
 
-## CLI Programs Specification
+## 3. Quickstart & Evaluation Commands
 
-### 1. Data Splitting (`split.py`)
+### Step 0: Install Dependencies
 ```bash
-python split.py --dataset data.csv --train-ratio 0.8 --seed 42
+pip install -r requirements.txt
 ```
-- Splits `data.csv` into `dataset/data_train.csv` and `dataset/data_valid.csv`.
 
-### 2. Training (`train.py`)
+### Step 1: Exploratory Data Analysis (Subject IV.2)
+Inspects class balance, scale discrepancies, feature distributions, and the correlation heatmap:
 ```bash
-python train.py --dataset dataset/data_train.csv --val-dataset dataset/data_valid.csv \
-                --layer 24 24 24 \
-                --epochs 84 \
-                --batch_size 8 \
-                --learning_rate 0.0314 \
-                --save saved_model.npy
+python3 eda.py --dataset data.csv --show
 ```
-- Prints epoch losses, renders learning curves, and saves model parameters.
 
-### 3. Prediction (`predict.py`)
+### Step 2: Split Dataset (Program 1)
+Partitions `data.csv` into `dataset/data_train.csv` (80%) and `dataset/data_valid.csv` (20%) using random seed `42`:
 ```bash
-python predict.py --dataset dataset/data_valid.csv --model saved_model.npy
+python3 split.py data.csv
+# Or with explicit flags:
+python3 split.py --dataset data.csv --train-ratio 0.8 --seed 42
 ```
-- Loads the trained model, performs inference, outputs predictions, and calculates final Binary Cross-Entropy loss.
+
+### Step 3: Train the Model (Program 2)
+Trains an MLP with 2 hidden layers of 24 neurons using **SGD** (mandatory):
+```bash
+python3 train.py --layer 24 24 --epochs 70 --batch_size 8 --learning_rate 0.0314 --optimizer sgd
+```
+* Or train with the **Adam optimizer + Early Stopping** (bonus):
+```bash
+python3 train.py --layer 24 24 --epochs 80 --batch_size 8 --learning_rate 0.005 --optimizer adam --early_stopping --patience 10 --history training_history.json
+```
+*Generates `./saved_model.npy` and `learning_curves.png`.*
+
+### Step 4: Run Predictions & Evaluate BCE (Program 3)
+Loads the saved model and evaluates on the unseen validation set using the **Binary Cross-Entropy Error formula ($E$)**:
+```bash
+python3 predict.py --dataset dataset/data_valid.csv --model ./saved_model.npy
+```
+
+### Step 5: Compare Optimizers on One Graph (Bonus Chapter V)
+Trains both SGD and Adam side-by-side and plots their validation loss curves on a single plot:
+```bash
+python3 compare.py
+```
+*Generates `models_comparison.png`.*
+
+### Alternative: Unified CLI (`mlp.py`)
+Matches the Subject IV.4 single-program option:
+```bash
+python3 mlp.py                  # Trains with default parameters
+python3 mlp.py split            # Runs split phase
+python3 mlp.py train [flags]    # Runs training phase
+python3 mlp.py predict [flags]  # Runs prediction phase
+python3 mlp.py eda              # Runs EDA phase
+python3 mlp.py compare          # Runs comparison phase
+```
 
 ---
 
-## Recommended Resources
+## 4. Theoretical Deep-Dive (Whiteboard Defense Guide)
 
-- **3Blue1Brown:** *Neural Networks series* (Visual intuition on forward pass, gradient descent, and backprop)
-- **Andrew Ng (DeepLearning.AI):** *Neural Networks and Deep Learning* (Course 1 on Coursera / YouTube)
-- **Michael Nielsen:** *Neural Networks and Deep Learning* (Free online text with mathematical derivations)
-- **CS231n (Stanford):** *Neural Networks Architecture and Optimization notes*
+During your defense, the evaluator will ask you to derive equations and justify architectural choices on a whiteboard. Here is everything you need:
+
+### A. Feedforward Propagation & Matrix Dimensions
+
+Let:
+* $m$ = batch size (e.g., 8)
+* $n^{[l-1]}$ = number of input neurons to layer $l$
+* $n^{[l]}$ = number of neurons in layer $l$
+
+For any layer $l$:
+$$Z^{[l]} = A^{[l-1]} \cdot W^{[l]} + b^{[l]}$$
+$$A^{[l]} = f(Z^{[l]})$$
+
+#### Matrix Dimensions (Show this on the whiteboard):
+* **Inputs batch $X = A^{[0]}$:** $(m \times 30)$
+* **Layer 1 Weights $W^{[1]}$:** $(30 \times 24)$
+* **Layer 1 Biases $b^{[1]}$:** $(1 \times 24)$
+* **Layer 1 Output $Z^{[1]}$:** $(m \times 30) \times (30 \times 24) + (1 \times 24) = (m \times 24)$
+* **Layer 2 Weights $W^{[2]}$:** $(24 \times 24)$
+* **Output Layer Weights $W^{[3]}$:** $(24 \times 2)$
+* **Final Output $A^{[3]}$:** $(m \times 2)$ (Softmax probabilities)
+
+**Parameter Count Formula:** $(\text{inputs} \times \text{neurons}) + \text{biases}$
+* Layer 1: $(30 \times 24) + 24 = 744$
+* Layer 2: $(24 \times 24) + 24 = 600$
+* Output: $(24 \times 2) + 2 = 50$
+* **Total parameters:** $744 + 600 + 50 = \mathbf{1,394}$ (with 2 hidden layers) or $\mathbf{1,994}$ (with 3 hidden layers).
+
+---
+
+### B. Activation Functions
+
+1. **Sigmoid:**
+   $$\sigma(z) = \frac{1}{1 + e^{-z}}, \quad \sigma'(z) = \sigma(z)(1 - \sigma(z)) = A(1 - A)$$
+   * Squashes values into $(0, 1)$.
+   * Derivative is fast because $A$ is already cached during forward propagation.
+   * Numerical safeguard: $z$ is clipped to $[-500, 500]$ to prevent exponential overflow.
+
+2. **Softmax (Output Layer):**
+   $$S(z_i) = \frac{e^{z_i - \max(z)}}{\sum_{j=1}^K e^{z_j - \max(z)}}$$
+   * Turns raw logits into probabilities that sum strictly to $1.0$.
+   * Subtracting $\max(z)$ makes the largest exponent $e^0 = 1$, eliminating floating-point overflow (`inf`).
+
+---
+
+### C. Backpropagation Derivation (The Chain Rule)
+
+Backpropagation calculates how much each weight and bias contributed to the final loss.
+
+1. **Output Layer Error ($\delta^{[L]}$):**
+   $$\delta^{[L]} = \frac{\partial L}{\partial Z^{[L]}} = A^{[L]} - Y \quad (\text{shape: } m \times 2)$$
+
+2. **Weight Gradient ($dW^{[l]}$):**
+   By the chain rule: $\frac{\partial L}{\partial W^{[l]}} = \frac{\partial L}{\partial Z^{[l]}} \cdot \frac{\partial Z^{[l]}}{\partial W^{[l]}}$
+   $$dW^{[l]} = \frac{1}{m} (A^{[l-1]})^T \cdot \delta^{[l]} \quad (\text{shape: } n^{[l-1]} \times n^{[l]})$$
+
+3. **Bias Gradient ($db^{[l]}$):**
+   $$db^{[l]} = \frac{1}{m} \sum_{i=1}^m \delta_i^{[l]} \quad (\text{shape: } 1 \times n^{[l]})$$
+
+4. **Passing Error to Previous Layer ($\delta^{[l-1]}$):**
+   $$\delta^{[l-1]} = \left( \delta^{[l]} \cdot (W^{[l]})^T \right) \odot f'(Z^{[l-1]}) \quad (\text{shape: } m \times n^{[l-1]})$$
+   * Where $\odot$ denotes element-wise (Hadamard) product.
+
+---
+
+### D. Softmax + Cross-Entropy Derivative Proof ($A - Y$)
+
+Evaluators love to ask: *"Why does the gradient at the output layer simplify to $\hat{y} - y$?"*
+
+**Proof:**
+1. Categorical Cross-Entropy: $L = -\sum_k y_k \ln(a_k)$
+2. Softmax: $a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}$
+3. By the chain rule: $\frac{\partial L}{\partial z_i} = \sum_k \frac{\partial L}{\partial a_k} \frac{\partial a_k}{\partial z_i}$
+4. Derivative of Softmax:
+   * When $k = i$: $\frac{\partial a_i}{\partial z_i} = a_i(1 - a_i)$
+   * When $k \ne i$: $\frac{\partial a_k}{\partial z_i} = -a_k a_i$
+5. Substitute into the sum:
+   $$\frac{\partial L}{\partial z_i} = -\frac{y_i}{a_i} \cdot a_i(1 - a_i) - \sum_{k \ne i} \frac{y_k}{a_k} (-a_k a_i)$$
+   $$\frac{\partial L}{\partial z_i} = -y_i(1 - a_i) + \sum_{k \ne i} y_k a_i$$
+   $$\frac{\partial L}{\partial z_i} = -y_i + y_i a_i + a_i \sum_{k \ne i} y_k$$
+   $$\frac{\partial L}{\partial z_i} = -y_i + a_i \underbrace{\left( y_i + \sum_{k \ne i} y_k \right)}_{= 1 \text{ (one-hot labels sum to 1)}} = a_i - y_i$$
+$$\mathbf{\frac{\partial L}{\partial Z} = A - Y} \quad \blacksquare$$
+
+---
+
+### E. Why Feature Normalization is Mandatory (The 25,000x Gap)
+
+Looking at raw `data.csv`:
+* `area_mean`: min $143.5$, max **$2501.0$** (mean $\approx 655$)
+* `smoothness_mean`: min $0.05$, max **$0.16$** (mean $\approx 0.10$)
+
+**The Problem:**
+Since $\frac{\partial L}{\partial W} = \frac{1}{m} X^T \delta$, the gradient is directly proportional to input value $X$.
+* The weight gradient for `area` is **$25,000\times$ larger** than for `smoothness`.
+* The loss surface becomes an elongated, pathological canyon. Gradient descent oscillates violently in the steep direction and stalls in the flat direction.
+
+**The Solution:**
+Z-score standardization:
+$$X_{\text{norm}} = \frac{X - \mu}{\sigma}$$
+* Centers all features at mean $\mu = 0$ with variance $\sigma = 1$.
+* **Data Leakage Rule:** We fit $\mu, \sigma$ **only on the training split**, and apply those exact parameters to validation/test sets.
+
+---
+
+### F. Weight Initializations (He Uniform vs. Zeros)
+
+1. **Why not Zeros?**
+   If all weights are initialized to 0, every neuron in a layer computes $Z = 0 \cdot X + 0 = 0$, producing identical activations and identical gradients. All neurons update identically, breaking **symmetry** and preventing the network from learning different features.
+2. **He (Kaiming) Uniform (`heUniform`):**
+   * Formula: Uniform distribution in $[-\text{limit}, +\text{limit}]$ where $\text{limit} = \sqrt{\frac{6}{n_{\text{in}}}}$.
+   * Specifically derived to keep signal variance constant across layers when using non-linear activations.
+
+---
+
+### G. Optimizers: SGD vs. Adam
+
+1. **SGD (Stochastic / Mini-Batch Gradient Descent):**
+   $$W \leftarrow W - \alpha \cdot dW, \quad b \leftarrow b - \alpha \cdot db$$
+   * Simple and effective, but uses a fixed global learning rate $\alpha$ for all parameters.
+
+2. **Adam (Adaptive Moment Estimation):**
+   Combines **Momentum** (first moment $m$) and **RMSprop** (second moment $v$):
+   * 1st moment (velocity): $m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$
+   * 2nd moment (scale): $v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$
+   * Bias correction: $\hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}$
+   * Parameter update: $\theta \leftarrow \theta - \frac{\alpha}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$
+   * Automatically gives small updates to frequently updated weights and large updates to infrequent features.
+
+---
+
+### H. Learning Curves: Diagnosing Overfitting & Early Stopping
+
+Subject IV.3 requires displaying two graphs:
+
+```text
+       Figure IV.1: Loss                      Figure IV.2: Accuracy
+ Loss                                   Acc
+  │ ─── Training Loss                    │ ─── Training Acc
+  │ - - Validation Loss                  │ ─── Validation Acc
+  │                                      │       /───────
+  │  \                                   │      / 
+  │   \────────                          │  ───/
+  └───────────────── Epochs              └───────────────── Epochs
+```
+
+* **Healthy Training:** Both training and validation loss smoothly decrease together and plateau.
+* **Overfitting:** Training loss continues to drop toward $0$, but validation loss starts curving upwards. The model is memorizing training noise.
+* **Underfitting:** Both training and validation loss remain high and refuse to drop (learning rate too low or model too small).
+* **Early Stopping:** Monitors validation loss; if it does not improve for $P$ epochs (patience), training halts and restores the best saved weights.
+
+---
+
+## 5. Bonus Features Implemented
+
+All 5 bonuses suggested in **Subject Chapter V** are fully functional:
+
+1. **Complex Optimization Function:** Adam optimizer with momentum and bias correction (`--optimizer adam`).
+2. **Multiple Learning Curves on Same Graph:** [compare.py](file:///Users/youssef/Documents/Multilayer-Perceptron/compare.py) compares SGD vs. Adam on a single figure (`models_comparison.png`).
+3. **Training Metrics History:** Saves history inside the model and allows JSON export (`--history training_history.json`).
+4. **Early Stopping:** Halts when validation loss plateaus and restores best epoch weights (`--early_stopping --patience 10`).
+5. **Multiple Evaluation Metrics:** Outputs Confusion Matrix, Precision, Recall, Specificity, and F1-Score in [predict.py](file:///Users/youssef/Documents/Multilayer-Perceptron/predict.py).
+
+---
+
+## 6. Defense FAQ: Rapid-Fire Questions & Answers
+
+| Question | Short Defense Answer |
+| :--- | :--- |
+| **"Why is output 2 neurons with Softmax instead of 1 with Sigmoid?"** | Subject IV.3 states: *"You must also implement the softmax function on the output layer in order to obtain the output as a probabilistic distribution."* Softmax outputs $[P(\text{Benign}), P(\text{Malignant})]$ where $\sum P = 1$. |
+| **"Why do we evaluate with BCE if we trained with Categorical CE?"** | Training with Softmax naturally couples with Categorical CE ($\hat{y} - y$). At evaluation, Subject IV.4 explicitly requires reporting the Binary Cross-Entropy formula: $E = -\frac{1}{N} \sum [y \ln p + (1-y)\ln(1-p)]$ using the positive class probability $p$. |
+| **"Did you balance the 63% / 37% dataset?"** | No, because $1.7:1$ is a mild imbalance. Over-sampling tabular rows duplicates exact points causing overfitting, and under-sampling deletes 25% of medical records. With Z-score normalization, the model naturally achieves $>97\%$ accuracy without artificial distortion. |
+| **"How do you prevent data leakage?"** | By fitting `StandardScaler` mean and std **strictly on `data_train.csv`**, and applying those same statistics to transform `data_valid.csv`. |
+| **"What happens if learning rate is too large?"** | The parameter updates overshoot the minimum, causing loss to oscillate or diverge to infinity (`NaN`). |

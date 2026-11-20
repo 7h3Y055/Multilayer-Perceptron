@@ -44,6 +44,7 @@ def parse_args():
     parser.add_argument("--early_stopping", action="store_true", help="Enable early stopping based on val_loss.")
     parser.add_argument("--patience", type=int, default=10, help="Patience for early stopping (default: 10).")
     parser.add_argument("--save", type=str, default="./saved_model.npy", help="Path to save trained model.")
+    parser.add_argument("--history", type=str, default=None, help="Optional path to save metrics history JSON.")
     parser.add_argument("--plot", type=str, default="learning_curves.png", help="Path to save learning curves.")
     parser.add_argument("--show-plot", action="store_true", help="Display plot interactively.")
     return parser.parse_args()
@@ -146,7 +147,14 @@ def main():
         },
     )
 
-    # 6. Render learning curves
+    # 6. Optional: export metrics history JSON (Subject Chapter V Bonus)
+    if args.history:
+        import json
+        with open(args.history, "w", encoding="utf-8") as f:
+            json.dump(network.history, f, indent=2)
+        print(f"> Training metrics history saved to '{args.history}'")
+
+    # 7. Render learning curves
     plot_learning_curves(network.history, save_path=args.plot, show=args.show_plot)
 
 

@@ -10,6 +10,7 @@ import split
 import train
 import predict
 import eda
+import compare
 
 
 def print_help():
@@ -25,6 +26,7 @@ Usage:
      python3 mlp.py train   [options]
      python3 mlp.py predict [options]
      python3 mlp.py eda     [options]
+     python3 mlp.py compare [options]
 
 For help on a specific phase:
   python3 mlp.py <phase> --help
@@ -45,6 +47,9 @@ def main():
     elif len(sys.argv) > 1 and sys.argv[1] == "eda":
         sys.argv.pop(1)
         eda.main()
+    elif len(sys.argv) > 1 and sys.argv[1] == "compare":
+        sys.argv.pop(1)
+        compare.main()
     elif len(sys.argv) > 1 and sys.argv[1] == "train":
         sys.argv.pop(1)
         train.main()
