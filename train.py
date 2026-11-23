@@ -5,6 +5,7 @@ Subject IV.4: "A training program"
 """
 
 import argparse
+import os
 import sys
 import numpy as np
 
@@ -16,8 +17,9 @@ from src.visualizer import plot_learning_curves
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train Multilayer Perceptron model.")
-    parser.add_argument("--dataset", type=str, default="dataset/data_train.csv", help="Path to training dataset.")
-    parser.add_argument("--val-dataset", type=str, default="dataset/data_valid.csv", help="Path to validation dataset.")
+    parser.add_argument("pos_dataset", nargs="?", default=None, help="Path to training dataset (positional).")
+    parser.add_argument("--dataset", type=str, default=None, help="Path to training dataset (flag).")
+    parser.add_argument("--val-dataset", type=str, default=None, help="Path to validation dataset.")
     parser.add_argument(
         "--layer",
         type=int,
@@ -25,9 +27,9 @@ def parse_args():
         default=[24, 24],
         help="Hidden layer dimensions (must have at least 2 hidden layers by default, e.g. --layer 24 24)",
     )
-    parser.add_argument("--epochs", type=int, default=70, help="Number of training epochs (default: 70).")
+    parser.add_argument("--epochs", type=int, default=80, help="Number of training epochs (default: 80).")
     parser.add_argument("--batch_size", type=int, default=8, help="Mini-batch size (default: 8).")
-    parser.add_argument("--learning_rate", type=float, default=0.0314, help="Learning rate (default: 0.0314).")
+    parser.add_argument("--learning_rate", type=float, default=0.035, help="Learning rate (default: 0.035).")
     parser.add_argument(
         "--loss",
         type=str,
@@ -58,21 +60,36 @@ def main():
         print("Error: The neural network must contain at least two hidden layers by default.", file=sys.stderr)
         sys.exit(1)
 
+    # Resolve training dataset path
+    train_dataset = args.pos_dataset or args.dataset
+    if train_dataset is None:
+        if os.path.exists("data_training.csv"):
+            train_dataset = "data_training.csv"
+        elif os.path.exists("dataset/data_train.csv"):
+            train_dataset = "dataset/data_train.csv"
+        else:
+            train_dataset = "data.csv"
+
+    # Resolve validation dataset path
+    val_dataset = args.val_dataset
+    if val_dataset is None and train_dataset == "dataset/data_train.csv" and os.path.exists("dataset/data_valid.csv"):
+        val_dataset = "dataset/data_valid.csv"
+
     # 1. Load training and validation datasets
     try:
-        X_train_raw, y_train = load_dataset(args.dataset)
+        X_train_raw, y_train = load_dataset(train_dataset)
     except Exception as e:
-        print(f"Error loading training dataset from '{args.dataset}': {e}", file=sys.stderr)
+        print(f"Error loading training dataset from '{train_dataset}': {e}", file=sys.stderr)
         sys.exit(1)
 
-    if args.val_dataset:
+    if val_dataset:
         try:
-            X_val_raw, y_val = load_dataset(args.val_dataset)
+            X_val_raw, y_val = load_dataset(val_dataset)
         except Exception as e:
-            print(f"Error loading validation dataset from '{args.val_dataset}': {e}", file=sys.stderr)
+            print(f"Error loading validation dataset from '{val_dataset}': {e}", file=sys.stderr)
             sys.exit(1)
     else:
-        # Fallback in-memory split if only one dataset was provided
+        # Automatic split if only a training dataset was provided
         X_train_raw, X_val_raw, y_train, y_val = train_val_split(X_train_raw, y_train, train_ratio=0.8, seed=42)
 
     # 2. Preprocessing: Fit scaler strictly on training data, then transform both
