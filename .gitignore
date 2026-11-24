@@ -228,3 +228,4 @@ data_training.csv
 *.pdf
 *.json
 !requirements.txt
+.DS_Store
